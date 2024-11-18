@@ -1,13 +1,7 @@
-import { Configuration, OpenAIApi } from "openai";
-import formidable from "formidable";
-import fs from "fs";
-import axios from "axios";
-
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
+const { Configuration, OpenAIApi } = require("openai");
+const formidable = require("formidable");
+const fs = require("fs");
+const axios = require("axios");
 
 const openai = new OpenAIApi(
     new Configuration({
@@ -15,7 +9,13 @@ const openai = new OpenAIApi(
     })
 );
 
-export default async function handler(req, res) {
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
+
+module.exports = async function handler(req, res) {
     const form = new formidable.IncomingForm();
 
     form.parse(req, async (err, fields, files) => {
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
             res.status(500).json({ error: error.message });
         }
     });
-}
+};
 
 async function identifyPlant(imagePath) {
     try {

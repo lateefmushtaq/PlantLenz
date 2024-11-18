@@ -1,72 +1,102 @@
 import { useState } from "react";
 import axios from "axios";
-import "./App.css";
-import CameraCapture from "./Camera";
 
-export default function App() {
+const App = () => {
   const [image, setImage] = useState(null);
-  const [result, setResult] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        console.log("Image loaded:", reader.result);
+        setImage(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
-  };
-
-  const handleButtonClick = () => {
-    document.getElementById("hiddenFileInput").click();
   };
 
   const handleSubmit = async () => {
+    setLoading(true);
+    console.log("Submitting image...");
+
     if (!image) {
       alert("Please upload an image first!");
+      setLoading(false);
       return;
     }
 
-    const formData = new FormData();
-    formData.append("image", image);
+    const apiKey = process.env.REACT_APP_PLANTNET_API_KEY;
+    console.log("API Key from env:", apiKey);
+
+    if (!apiKey) {
+      console.error("API Key is missing!");
+      alert("API Key is missing!");
+      setLoading(false);
+      return;
+    }
 
     try {
-      const response = await axios.post("/api/openai", formData, {
+      const apiUrl = "https://api.plant.id/v2/identify"; // Ensure this URL is correct
+      console.log("Sending request to:", apiUrl); // Debug log for request URL
+
+      const formData = new FormData();
+      formData.append("images", image);
+
+      console.log("Form Data:", formData); // Debug log for form data
+
+      const response = await axios.post(apiUrl, formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Api-Key": apiKey, // Make sure the header is correctly set
         },
       });
-      setResult(response.data.result);
+
+      console.log("Response from API:", response);
+      setResult(response.data);
     } catch (error) {
-      console.error("Error uploading the image:", error);
+      console.error("Error identifying plant:", error);
+      alert("Error identifying plant");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <h1>Plant Identifier</h1>
-      <h2>Logo</h2>
-      <div style={{ display: "flex" }}>
-        <button onClick={handleButtonClick}>Upload Image</button>
-        <input
-          type="file"
-          id="hiddenFileInput"
-          style={{ display: "none" }}
-          onChange={handleImageChange}
-          accept="image/*"
-        />
-        <div>
-          {image && (
-            <img
-              src={URL.createObjectURL(image)}
-              alt="Selected plant"
-              style={{ width: "100%", maxWidth: "500px", marginTop: "20px" }}
-            />
-          )}
-        </div>
-        <CameraCapture image={image} setImage={setImage} />
-      </div>
-      <button onClick={handleSubmit} style={{ marginTop: "20px" }}>
-        Identify Plant
+    <div>
+      <h2>Plant Identification</h2>
+      <button onClick={() => document.getElementById("fileInput").click()}>
+        Upload Image
       </button>
-      {result && <p>{result}</p>}
-    </>
+      <input
+        type="file"
+        id="fileInput"
+        style={{ display: "none" }}
+        onChange={handleImageChange}
+        accept="image/*"
+      />
+      {image && (
+        <div>
+          <img
+            src={image}
+            alt="Uploaded"
+            style={{ width: "100%", maxWidth: "500px" }}
+          />
+        </div>
+      )}
+      {image && !loading && (
+        <button onClick={handleSubmit}>Identify Plant</button>
+      )}
+      {loading && <p>Loading...</p>}
+      {result && (
+        <div>
+          <h3>Plant Identification Result:</h3>
+          <pre>{JSON.stringify(result, null, 2)}</pre>
+        </div>
+      )}
+    </div>
   );
-}
+};
+
+export default App;
