@@ -28,7 +28,7 @@ const App = () => {
       return;
     }
 
-    const apiKey = process.env.REACT_APP_PLANTNET_API_KEY;
+    const apiKey = process.env.REACT_APP_PLANTNET_API_KEY; // This should work now
     console.log("API Key from env:", apiKey);
 
     if (!apiKey) {
@@ -40,12 +40,10 @@ const App = () => {
 
     try {
       const apiUrl = "https://api.plant.id/v2/identify"; // Ensure this URL is correct
-      console.log("Sending request to:", apiUrl); // Debug log for request URL
+      console.log("Sending request to:", apiUrl);
 
       const formData = new FormData();
       formData.append("images", image);
-
-      console.log("Form Data:", formData); // Debug log for form data
 
       const response = await axios.post(apiUrl, formData, {
         headers: {
